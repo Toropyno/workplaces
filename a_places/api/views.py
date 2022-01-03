@@ -10,13 +10,12 @@ from .serializers import (ReservationSerializer,
                           UserSerializer,
                           ReservePlaceSerializer, )
 from a_places.api.filters import WorkplaceFilter
-from a_places import services
 from a_places.models import Reservation, Workplace
 
 
 class WorkplaceViewSet(viewsets.ModelViewSet):
     """
-    ViewSet для модели Workplace
+    Рабочие места
 
     * разрешены методы: чтение;
     * только для авторизованных пользователей;
@@ -29,9 +28,11 @@ class WorkplaceViewSet(viewsets.ModelViewSet):
     @action(detail=True)
     def reservations(self, request, pk=None):
         """
-        Возвращает список бронирований конкретного рабочего места
+        Список бронирований рабочего места
+
+        * только для авторизованных пользователей;
         """
-        reservations = services.get_reservations(self.get_object())
+        reservations = Reservation.objects.filter(place=self.get_object())
         serializer = ReservationSerializer(reservations, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -44,7 +45,7 @@ class WorkplaceViewSet(viewsets.ModelViewSet):
 
 class ReservationViewSet(viewsets.ModelViewSet):
     """
-    ViewSet для модели Reservation
+    Бронирования
 
     * разрешены методы: чтение, удаление;
     * только для авторизованных пользователей;
@@ -65,26 +66,9 @@ class ReservationViewSet(viewsets.ModelViewSet):
         return Reservation.objects.filter(user=self.request.user)
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet для модели User
-
-    * разрешены методы: запись;
-    """
-    queryset = get_user_model().objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def get_permissions(self):
-        actions_for_admin_only = ['retrieve', 'list', 'update', 'partial_update', 'destroy']
-        if self.action in actions_for_admin_only:
-            self.permission_classes = [IsAdminUser]
-        return super().get_permissions()
-
-
 class CreateReservationView(generics.CreateAPIView):
     """
-    ViewSet для модели Reservation
+    Бронирование рабочего места
 
     * бронирует рабочее место;
     * разрешены методы: запись;
@@ -103,3 +87,20 @@ class CreateReservationView(generics.CreateAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    Пользователи
+
+    * разрешены методы: запись;
+    """
+    queryset = get_user_model().objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        actions_for_admin_only = ['retrieve', 'list', 'update', 'partial_update', 'destroy']
+        if self.action in actions_for_admin_only:
+            self.permission_classes = [IsAdminUser]
+        return super().get_permissions()

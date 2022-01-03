@@ -6,14 +6,6 @@ from .models import Workplace, Reservation
 User = get_user_model()
 
 
-def get_reservations(place):
-    """
-    Возвращает список бронирований рабочего места place
-    """
-    booking_list = Reservation.objects.filter(place=place)
-    return booking_list
-
-
 def get_vacant_places(datetime_from, datetime_to):
     """
     Возвращает список свободных рабочих мест в заданный период времени
